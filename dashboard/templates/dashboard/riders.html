@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content">
+  <section id="riders" class="static-section">
+    <div class="page-h" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1>Registered Riders</h1>
+        <p>Live status and safety compliance tracking {% if query %}(Results for "{{ query }}"){% endif %}</p>
+      </div>
+      <a href="{% url 'add_rider' %}" class="btn primary" style="background: var(--ink); color: white; padding: 0.8rem 1.5rem; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><path d="M12 5v14M5 12h14"></path></svg>
+          Add New Rider
+      </a>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-h">
+            <h3>Active Fleet List</h3>
+            <span class="sub">Comprehensive monitoring</span>
+        </div>
+        <div class="card-b tight">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Rider</th>
+                        <th>Status</th>
+                        <th>Helmet Code</th>
+                        <th>Strap</th>
+                        <th>Worn</th>
+                        <th>Alcohol</th>
+                        <th>Speed</th>
+                        <th>Battery</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rider in riders %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="av" style="background: var(--blue);">{{ rider.name|slice:":1" }}</div>
+                                <div>
+                                    <b style="display: block;">{{ rider.name }}</b>
+                                    <span style="font-size: 11px; color: var(--ink-3);">Member</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="pill {% if rider.helmet.is_connected %}green{% else %}gray{% endif %}">
+                                <span class="d"></span>{% if rider.helmet.is_connected %}Live{% else %}Offline{% endif %}
+                            </span>
+                        </td>
+                        <td class="mono" style="font-size:12px;">{{ rider.helmet.helmet_id|default:"N/A" }}</td>
+                        <td>
+                            {% if rider.helmet.is_strapped %}
+                            <span class="pill green">Secure</span>
+                            {% else %}
+                            <span class="pill red">Unstrapped</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rider.helmet.is_connected %}
+                            <span class="pill blue">Active</span>
+                            {% else %}
+                            <span class="pill gray">Resting</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="pill {% if rider.helmet.alcohol_level > 0.05 %}red{% else %}green{% endif %}">
+                                {{ rider.helmet.alcohol_level|default:0 }} mg/L
+                            </span>
+                        </td>
+                        <td class="mono">{{ rider.helmet.speed|default:0 }} km/h</td>
+                        <td style="width: 120px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="bar {% if rider.helmet.battery_level < 20 %}red{% endif %}">
+                                    <span style="width:{{ rider.helmet.battery_level|default:0 }}%"></span>
+                                </div>
+                                <span style="font-size: 11px;">{{ rider.helmet.battery_level|default:0 }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{% url 'rider_detail' rider.id %}" class="btn sm primary">Track</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" style="text-align:center; padding: 4rem;">No riders registered</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

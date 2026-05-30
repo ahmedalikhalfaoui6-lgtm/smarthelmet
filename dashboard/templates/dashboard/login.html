@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | {{ app_settings.platform_name|default:"HeisenHelmet" }}</title>
+    <style>
+        :root {
+            --primary: oklch(0.62 0.15 250);
+            --safety-orange: #ff9f1c;
+            --bg: #030712;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background:
+                linear-gradient(90deg, rgba(3, 7, 18, 0.88) 0%, rgba(3, 7, 18, 0.74) 38%, rgba(3, 7, 18, 0.28) 70%, rgba(3, 7, 18, 0.42) 100%),
+                url("{% static 'dashboard/img/backgrounds/login-rider.jpg' %}") center right / cover no-repeat,
+                var(--bg);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(3, 7, 18, 0.28), rgba(3, 7, 18, 0.62)),
+                radial-gradient(circle at 18% 22%, oklch(0.62 0.15 250 / 0.22), transparent 30%),
+                radial-gradient(circle at 82% 78%, rgba(255, 159, 28, 0.16), transparent 34%);
+            pointer-events: none;
+        }
+
+        .auth-shell {
+            min-height: 100vh;
+            width: min(100%, 1440px);
+            margin: 0 auto;
+            padding: 48px clamp(20px, 7vw, 96px);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: rgba(7, 17, 31, 0.78);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 16px;
+            padding: clamp(2rem, 4vw, 3rem);
+            width: 100%;
+            max-width: 430px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-top: 3px solid var(--safety-orange);
+            pointer-events: none;
+        }
+
+        .logo-box {
+            width: 68px;
+            height: 68px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25), 0 0 34px oklch(0.62 0.15 250 / 0.35);
+        }
+
+        .logo-box img {
+            width: 52px;
+            height: 52px;
+            display: block;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0;
+            text-align: center;
+            letter-spacing: 0;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.68);
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.58);
+            margin-bottom: 0.6rem;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(2, 6, 23, 0.58);
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(2, 6, 23, 0.76);
+            box-shadow: 0 0 0 4px oklch(0.62 0.15 250 / 0.16);
+        }
+
+        .login-btn {
+            width: 100%;
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            background: #f8fafc;
+            color: #07111f;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #fff7ed;
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active { transform: translateY(0px); }
+
+        .integrity-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.46);
+        }
+
+        .error-msg {
+            background: oklch(0.4 0.2 25 / 0.2);
+            border: 1px solid oklch(0.4 0.2 25);
+            color: oklch(0.8 0.1 25);
+            padding: 0.75rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                background:
+                    linear-gradient(180deg, rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86)),
+                    url("{% static 'dashboard/img/backgrounds/login-rider.jpg' %}") center / cover no-repeat,
+                    var(--bg);
+            }
+
+            .auth-shell {
+                justify-content: center;
+                padding: 28px 18px;
+            }
+
+            .auth-card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="auth-shell">
+        <section class="auth-card" aria-label="Login form">
+            <div class="logo-box">
+                <img src="{% static 'dashboard/img/brand/heisenhelmet-logo.svg' %}" alt="{{ app_settings.platform_name|default:'HeisenHelmet' }} logo">
+            </div>
+            <h1>{{ app_settings.platform_name|default:"HeisenHelmet" }}</h1>
+            <p class="subtitle">IoT Safety & Fleet Integrity Platform</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="error-msg">Verification failed. Check credentials.</div>
+                {% endif %}
+
+                <div class="input-group">
+                    <label>Identifier</label>
+                    <input type="text" name="username" placeholder="Username or Email" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Security Key</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="login-btn">Secure Login</button>
+            </form>
+
+            <div class="integrity-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Encrypted End-to-End Safety Protocol
+            </div>
+        </section>
+    </main>
+</body>
+</html>

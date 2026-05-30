@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+  <section id="incidents" class="static-section">
+    {% if selected_incident %}
+    <div class="card" style="margin-bottom: 2rem; border: 2px solid var(--red);">
+        <div class="card-h" style="background: var(--red-soft);">
+            <h3 style="color: var(--red-ink);">Incident Spotlight: {{ selected_incident.get_type_display }}</h3>
+            <span class="sub" style="color: var(--red-ink);">ID: #{{ selected_incident.id }}</span>
+            <div class="right">
+                <form method="POST" style="margin:0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="toggle_id" value="{{ selected_incident.id }}">
+                    <button type="submit" class="btn sm {% if selected_incident.resolved %}primary{% endif %}">
+                        {% if selected_incident.resolved %}Mark Unresolved{% else %}Mark Resolved{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="grid g-2" style="gap:0;">
+            <div id="incident-map" style="height: 300px; width: 100%;"></div>
+            <div class="card-b">
+                <div class="kv"><span class="k">Rider</span><span class="v">{{ selected_incident.rider.name }}</span></div>
+                <div class="kv"><span class="k">Time</span><span class="v">{{ selected_incident.timestamp|date:"Y-m-d H:i:s" }}</span></div>
+                <div class="kv"><span class="k">Location</span><span class="v mono">{{ selected_incident.latitude }}, {{ selected_incident.longitude }}</span></div>
+                <div class="kv"><span class="k">Status</span><span class="v">{% if selected_incident.resolved %}<span class="pill green">Resolved</span>{% else %}<span class="pill red">Action Required</span>{% endif %}</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var map = L.map('incident-map').setView([{{ selected_incident.latitude }}, {{ selected_incident.longitude }}], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '(c) OpenStreetMap contributors'
+            }).addTo(map);
+            L.marker([{{ selected_incident.latitude }}, {{ selected_incident.longitude }}]).addTo(map)
+                .bindPopup("<b>{{ selected_incident.get_type_display }}</b><br>{{ selected_incident.timestamp|date:'H:i' }}").openPopup();
+        });
+    </script>
+    {% endif %}
+
+    <div class="page-h">
+      <div>
+        <h1>Active Incidents</h1>
+        <p>Real-time safety violations and crash detections</p>
+      </div>
+    </div>
+
+    <div class="card">
+        <div class="card-b tight">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Rider</th>
+                        <th>Type</th>
+                        <th>Timestamp</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for incident in incidents %}
+                    <tr>
+                        <td><b>{{ incident.rider.name }}</b><br><small>Helmet: {{ incident.helmet.helmet_id }}</small></td>
+                        <td>
+                            <span class="pill {% if incident.type == 'CRASH' %}red{% elif incident.type == 'ALC' %}amber{% else %}gray{% endif %}">
+                                {{ incident.get_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ incident.timestamp|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if incident.resolved %}
+                            <span class="v" style="color:var(--green-ink)">Resolved</span>
+                            {% else %}
+                            <span class="v" style="color:var(--red-ink)">Open</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="?id={{ incident.id }}" class="btn sm">View Detail</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 2rem;">No incidents recorded</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

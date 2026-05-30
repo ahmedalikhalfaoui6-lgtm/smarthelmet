@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+  <section id="rider-live" class="static-section">
+    <div class="page-h">
+      <div>
+        <h1>{{ rider.name }} tracking</h1>
+        <p>Live sensor data and telemetry history</p>
+      </div>
+    </div>
+
+    <div class="grid g-4" id="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="stat"><div class="top"><span class="lbl">Speed</span><span class="ic">KM</span></div><div class="num" id="live-speed">{{ rider.helmet.speed|default:0 }}<small> km/h</small></div><div class="mini-line blue"></div></div>
+        <div class="stat"><div class="top"><span class="lbl">Alcohol mg/L</span><span class="ic">MQ</span></div><div class="num" id="live-alc" style="color:var({% if rider.helmet.alcohol_level > 0.05 %}--red-ink{% else %}--green-ink{% endif %})">{{ rider.helmet.alcohol_level|default:0 }}</div><div class="mini-line {% if rider.helmet.alcohol_level > 0.05 %}red{% else %}green{% endif %}"></div></div>
+        <div class="stat"><div class="top"><span class="lbl">Tilt Angle</span><span class="ic">MPU</span></div><div class="num" id="live-tilt">{{ rider.helmet.tilt_angle|default:0 }}<small>°</small></div><div class="mini-line violet"></div></div>
+        <div class="stat"><div class="top"><span class="lbl">Strap Status</span><span class="ic">ST</span></div><div class="num" id="live-strapped">{% if rider.helmet.is_strapped %}SECURE{% else %}OPEN{% endif %}</div><div class="mini-line {% if rider.helmet.is_strapped %}green{% else %}red{% endif %}"></div></div>
+    </div>
+
+    <div class="grid g-2" style="margin-top: 2rem;">
+      <div class="card">
+        <div class="card-h">
+          <h3>Telemetry History</h3>
+          <span class="sub">Speed & Alcohol (Last 20 points)</span>
+        </div>
+        <div class="card-b" style="height: 300px;">
+          <canvas id="historyChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <h3>MPU6050 Precision</h3>
+          <span class="sub">Tilt Angle History</span>
+        </div>
+        <div class="card-b" style="height: 300px;">
+          <canvas id="tiltChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g-1">
+      <div class="card">
+        <div class="card-h">
+          <h3>Current Position</h3>
+          <span class="sub">GPS Fix</span>
+        </div>
+        <div class="card-b tight">
+          <div id="rider-map" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+    var lat = {{ rider.helmet.latitude|default:0 }};
+    var lon = {{ rider.helmet.longitude|default:0 }};
+    
+    var map = L.map('rider-map').setView([lat, lon], (lat === 0 ? 2 : 16));
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '(c) HeisenHelmet Contributors'
+    }).addTo(map);
+    
+    var marker;
+    if (lat !== 0 || lon !== 0) {
+        marker = L.marker([lat, lon]).addTo(map).bindPopup("Current Position");
+    }
+
+    // Charts
+    const ctxHistory = document.getElementById('historyChart').getContext('2d');
+    const historyChart = new Chart(ctxHistory, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Speed (km/h)',
+                borderColor: '#2563eb',
+                data: [],
+                tension: 0.4
+            }, {
+                label: 'Alcohol (mg/L)',
+                borderColor: '#ef4444',
+                data: [],
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+    });
+
+    const ctxTilt = document.getElementById('tiltChart').getContext('2d');
+    const tiltChart = new Chart(ctxTilt, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Tilt Angle (°)',
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                data: [],
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    function pollRiderData() {
+        fetch('/live-data/?rider_id={{ rider.id }}')
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > 0) {
+                    var h = data[0];
+                    
+                    // Update UI stats
+                    if(document.getElementById('live-speed')) document.getElementById('live-speed').innerHTML = `${h.speed || 0}<small> km/h</small>`;
+                    if(document.getElementById('live-alc')) {
+                        document.getElementById('live-alc').innerText = h.alc || 0;
+                        document.getElementById('live-alc').style.color = h.alc > 0.05 ? 'var(--red-ink)' : 'var(--green-ink)';
+                    }
+                    if(document.getElementById('live-tilt')) document.getElementById('live-tilt').innerHTML = `${h.tilt || 0}<small>°</small>`;
+                    if(document.getElementById('live-strapped')) {
+                       document.getElementById('live-strapped').innerText = h.strapped ? 'SECURE' : 'OPEN';
+                       document.getElementById('live-strapped').parentElement.querySelector('.mini-line').className = `mini-line ${h.strapped ? 'green' : 'red'}`;
+                    }
+
+                    // Update Charts
+                    if(h.history && h.history.length > 0) {
+                        const labels = h.history.map(pt => pt.time);
+                        historyChart.data.labels = labels;
+                        historyChart.data.datasets[0].data = h.history.map(pt => pt.speed);
+                        historyChart.data.datasets[1].data = h.history.map(pt => pt.alc);
+                        historyChart.update();
+
+                        tiltChart.data.labels = labels;
+                        tiltChart.data.datasets[0].data = h.history.map(pt => pt.tilt);
+                        tiltChart.update();
+                    }
+
+                    if (h.lat && h.lon) {
+                        var newPos = [h.lat, h.lon];
+                        if (marker) {
+                            marker.setLatLng(newPos);
+                        } else {
+                            marker = L.marker(newPos).addTo(map);
+                            map.setView(newPos, 16);
+                        }
+                    }
+                }
+            });
+    }
+    setInterval(pollRiderData, 5000);
+    pollRiderData();
+</script>
+{% endblock %}

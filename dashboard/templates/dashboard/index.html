@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block content %}
+<section id="dashboard" class="static-section">
+  <div class="page-h">
+    <div>
+      <h1>Operations dashboard</h1>
+      <p>Real-time fleet safety overview - {{ app_settings.platform_name|default:"HeisenHelmet" }} System</p>
+    </div>
+    <div class="right">
+      <a class="btn primary" href="{% url 'riders' %}">Provision helmet</a>
+    </div>
+  </div>
+
+  <div class="grid g-4" style="gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="stat"><div class="top"><span class="lbl">Helmets online</span><span class="ic">HH</span></div><div class="num">{{ connected_helmets }}<small> / {{ total_helmets }}</small></div><div class="mini-line"></div></div>
+    <div class="stat">
+      <div class="top"><span class="lbl">Ride-Ready Helmets</span><span class="ic">RR</span></div>
+      <div class="num" id="ride-ready-count" style="color:var(--{{ ride_ready_color }}-ink)">{{ ride_ready_helmets }}<small id="ride-ready-total">/ {{ connected_helmets }}</small></div>
+      <div class="delta"><span class="meta">Helmet on + strap closed + alcohol safe</span></div>
+      <div class="mini-line {{ ride_ready_color }}"></div>
+    </div>
+    <div class="stat"><div class="top"><span class="lbl">Active alerts</span><span class="ic">AL</span></div><div class="num" style="color:var(--red-ink)">{{ critical_incidents }}</div><div class="mini-line red"></div></div>
+    <div class="stat">
+      <div class="top"><span class="lbl">Motor Permission</span><span class="ic">MP</span></div>
+      <div class="num" id="motor-permission" style="color:var(--{{ motor_color }}-ink)">{{ motor_permission }}</div>
+      <div class="delta"><span class="meta" id="motor-reason">{{ motor_reason }}</span></div>
+      <div class="mini-line {{ motor_color }}" id="motor-line"></div>
+    </div>
+  </div>
+
+  <div class="grid g-1" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-h">
+            <h3>Safety Readiness & Fail-Safe</h3>
+            <span class="sub">Live ride gate conditions</span>
+        </div>
+        <div class="card-b">
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Helmet Worn</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--blue-ink);" id="helmet-worn-count">{{ helmet_worn_count }} / {{ connected_helmets }}</div>
+                    <progress id="helmet-worn-progress" value="{{ helmet_worn_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
+                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">IR helmet detection</div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Strap Secured</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--green-ink);" id="strap-secured-count">{{ strap_secured_count }} / {{ connected_helmets }}</div>
+                    <progress id="strap-secured-progress" value="{{ strap_secured_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
+                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Loose strap blocks motor</div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Alcohol Safe</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--amber-ink);" id="alcohol-safe-count">{{ alcohol_safe_count }} / {{ connected_helmets }}</div>
+                    <progress id="alcohol-safe-progress" value="{{ alcohol_safe_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
+                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Limit: {{ alcohol_limit }} mg/L</div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Link Fail-Safe</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--red-ink);" id="link-failsafe-count">{{ disconnected_helmets }} offline</div>
+                    <progress id="link-failsafe-progress" value="{{ connected_helmets }}" max="{{ total_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
+                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Relay cuts after 2s link loss</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;" id="setup-checklist">
+              <span class="pill amber">SOS phone set</span>
+              <span class="pill amber">Receiver MAC set</span>
+              <span class="pill amber">Relay polarity checked</span>
+              <span class="pill amber">IR polarity checked</span>
+              <span class="pill amber">Shock/tilt calibrated</span>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="grid g-2" style="gap: 2rem; align-items: start;">
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-h">
+        <h3>Live fleet map</h3>
+        <span class="sub">Dynamic positions</span>
+        <div class="right">
+          <span id="map-status" class="pill green" style="display: none;"><span class="d"></span>Updating live</span>
+        </div>
+      </div>
+      <div class="card-b tight">
+        <div id="map" style="height: 550px; width: 100%; border-radius: 0 0 8px 8px;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-h">
+        <h3>Safety Events</h3>
+        <span class="sub">Crash / alcohol events</span>
+      </div>
+      <div class="card-b tight">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rider</th>
+              <th>Type</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inc in recent_incidents %}
+            <tr>
+              <td>{{ inc.rider.name }}</td>
+              <td><span class="pill {% if inc.type == 'CRASH' %}red{% else %}amber{% endif %}">{{ inc.get_type_display }}</span></td>
+              <td><a href="{% url 'incidents' %}?id={{ inc.id }}" class="btn sm">Trace</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center; padding: 2rem;">No recent safety events</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div style="padding: 1rem; text-align: right;">
+          <a href="{% url 'incidents' %}" class="btn btn-sm">View All Logs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+    var map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '(c) OpenStreetmap contributors'
+    }).addTo(map);
+
+    var markers = {};
+    var mapStatus = document.getElementById('map-status');
+
+    function setProgress(id, value, max) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.max = Math.max(max, 1);
+        el.value = value;
+    }
+
+    function setReadinessColor(color) {
+        var readyCount = document.getElementById('ride-ready-count');
+        var motorPermission = document.getElementById('motor-permission');
+        var motorLine = document.getElementById('motor-line');
+        if (readyCount) readyCount.style.color = `var(--${color}-ink)`;
+        if (motorLine) motorLine.className = `mini-line ${color}`;
+        if (motorPermission) motorPermission.style.color = `var(--${color}-ink)`;
+    }
+
+    function updateSafetySummary(data) {
+        var total = data.length;
+        var connected = data.filter(h => h.is_connected);
+        var ready = connected.filter(h => h.motor_allowed);
+        var worn = connected.filter(h => h.worn);
+        var strapped = connected.filter(h => h.strapped);
+        var alcoholSafe = connected.filter(h => h.alcohol_safe);
+        var disconnected = Math.max(total - connected.length, 0);
+
+        if (document.getElementById('ride-ready-count')) {
+            document.getElementById('ride-ready-count').childNodes[0].nodeValue = ready.length;
+        }
+        if (document.getElementById('ride-ready-total')) {
+            document.getElementById('ride-ready-total').innerText = `/ ${connected.length}`;
+        }
+        if (document.getElementById('helmet-worn-count')) {
+            document.getElementById('helmet-worn-count').innerText = `${worn.length} / ${connected.length}`;
+        }
+        if (document.getElementById('strap-secured-count')) {
+            document.getElementById('strap-secured-count').innerText = `${strapped.length} / ${connected.length}`;
+        }
+        if (document.getElementById('alcohol-safe-count')) {
+            document.getElementById('alcohol-safe-count').innerText = `${alcoholSafe.length} / ${connected.length}`;
+        }
+        if (document.getElementById('link-failsafe-count')) {
+            document.getElementById('link-failsafe-count').innerText = `${disconnected} offline`;
+        }
+
+        setProgress('helmet-worn-progress', worn.length, connected.length);
+        setProgress('strap-secured-progress', strapped.length, connected.length);
+        setProgress('alcohol-safe-progress', alcoholSafe.length, connected.length);
+        setProgress('link-failsafe-progress', connected.length, total);
+
+        var permission = 'Blocked';
+        var reason = 'No helmets online';
+        var color = 'red';
+        if (connected.length > 0 && ready.length === connected.length) {
+            permission = 'Enabled';
+            reason = 'All checks passed';
+            color = 'green';
+        } else if (ready.length > 0) {
+            permission = 'Mixed';
+            reason = `${ready.length}/${connected.length} helmets ready`;
+            color = 'amber';
+        } else if (connected.length > 0) {
+            var blocked = connected.find(h => h.motor_reason && h.motor_reason !== 'All checks passed');
+            reason = blocked ? blocked.motor_reason : 'Blocked: checks incomplete';
+        }
+
+        if (document.getElementById('motor-permission')) {
+            document.getElementById('motor-permission').innerText = permission;
+        }
+        if (document.getElementById('motor-reason')) {
+            document.getElementById('motor-reason').innerText = reason;
+        }
+        setReadinessColor(color);
+    }
+
+    function updateLiveData() {
+        if (mapStatus) mapStatus.style.display = 'inline-flex';
+        
+        fetch('/live-data/')
+            .then(response => response.json())
+            .then(data => {
+                updateSafetySummary(data);
+
+                data.forEach(helmet => {
+                    var lat = helmet.lat;
+                    var lng = helmet.lon;
+                    var id = helmet.id;
+                    var rider = helmet.rider;
+                    var speed = helmet.speed || 0;
+                    var alc = helmet.alc || 0;
+                    var motorAllowed = helmet.motor_allowed;
+                    var helmetState = helmet.worn ? 'Worn' : 'Missing';
+                    var strapState = helmet.strapped ? 'Secured' : 'Open';
+                    var gpsState = helmet.gps_fix ? 'Fix' : 'No fix';
+                    var profileLink = helmet.rider_id ? `<a href="/riders/${helmet.rider_id}/" style="display:block; text-align:center; padding:5px; background:#000; color:#fff; border-radius:4px; text-decoration:none; font-size:10px;">Full Profile</a>` : '';
+
+                    if (lat && lng) {
+                        var popupText = `
+                            <div style="min-width: 180px;">
+                                <h4 style="margin:0 0 5px; font-size:14px;">${rider}</h4>
+                                <div style="font-size:11px; color:#666; margin-bottom:8px;">ID: ${id}</div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span>Speed:</span><b>${speed} km/h</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span>Alcohol:</span><b style="color:${helmet.alcohol_safe ? 'green' : 'red'}">${alc} mg/L</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span>Helmet:</span><b>${helmetState}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span>Strap:</span><b style="color:${helmet.strapped ? 'green' : 'red'}">${strapState}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span>Motor:</span><b style="color:${motorAllowed ? 'green' : 'red'}">${motorAllowed ? 'Enabled' : 'Blocked'}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                    <span>GPS:</span><b>${gpsState}</b>
+                                </div>
+                                <div style="font-size:10px; color:#666; margin-bottom:8px;">${helmet.motor_reason}</div>
+                                ${profileLink}
+                            </div>
+                        `;
+                        
+                        if (markers[id]) {
+                            markers[id].setLatLng([lat, lng]).setPopupContent(popupText);
+                        } else {
+                            var icon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div style="background-color:${motorAllowed ? '#28c76f' : '#ff4d49'}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.3);"></div>`,
+                                iconSize: [12, 12],
+                                iconAnchor: [6, 6]
+                            });
+                            markers[id] = L.marker([lat, lng], {icon: icon}).addTo(map).bindPopup(popupText);
+                            if (Object.keys(markers).length === 1) map.setView([lat, lng], 15);
+                        }
+                    }
+                });
+                
+                setTimeout(() => { if (mapStatus) mapStatus.style.display = 'none'; }, 1000);
+            })
+            .catch(err => {
+                console.error('Map update error:', err);
+                if (mapStatus) {
+                    mapStatus.className = 'pill red';
+                    mapStatus.innerHTML = '<span class="d"></span>Update Failed';
+                }
+            });
+    }
+    updateLiveData();
+    setInterval(updateLiveData, {{ refresh_rate }} * 1000);
+</script>
+{% endblock %}

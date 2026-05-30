@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+  <section id="settings" class="static-section">
+    <div class="page-h">
+      <div>
+        <h1>Platform Configuration</h1>
+        <p>Manage IoT connectivity, safety thresholds, and system behavior</p>
+      </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="grid g-2">
+            <!-- Branding Section -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-h">
+                    <h3>Platform Branding</h3>
+                    <span class="sub">Customize the identity of your safety cloud</span>
+                </div>
+                <div class="card-b" style="padding: 1.5rem;">
+                    <div class="form-item" style="max-width: 400px;">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Platform Name</label>
+                        <input type="text" name="platform_name" value="{{ settings.platform_name }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);" placeholder="e.g. HeisenHelmet">
+                        <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">This name will appear in the sidebar and navigation headers.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MQTT Connectivity -->
+            <div class="card">
+                <div class="card-h">
+                    <h3>MQTT Infrastructure</h3>
+                    <span class="sub">Broker & Topic Configuration</span>
+                </div>
+                <div class="card-b" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem;">
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Broker Host / IP</label>
+                        <input type="text" name="mqtt_broker_host" value="{{ settings.mqtt_broker_host }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);" placeholder="e.g. broker.emqx.io">
+                    </div>
+                    <div class="grid g-2" style="gap: 1rem;">
+                        <div class="form-item">
+                            <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Port</label>
+                            <input type="number" name="mqtt_broker_port" value="{{ settings.mqtt_broker_port|default:1883 }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        </div>
+                        <div class="form-item">
+                            <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Refresh Rate (s)</label>
+                            <input type="number" name="map_refresh_rate_seconds" value="{{ settings.map_refresh_rate_seconds }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Status Topic (Inbound)</label>
+                        <input type="text" name="mqtt_topic_helmet_status" value="{{ settings.mqtt_topic_helmet_status }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section); font-family: var(--mono); font-size: 12px;">
+                    </div>
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Command Topic (Outbound)</label>
+                        <input type="text" name="mqtt_topic_helmet_command" value="{{ settings.mqtt_topic_helmet_command }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section); font-family: var(--mono); font-size: 12px;">
+                    </div>
+
+                    <div style="border-top: 1px solid var(--line); margin: 0.5rem 0; padding-top: 1rem;">
+                        <h4 style="font-size: 13px; margin-bottom: 1rem;">Web / WebSocket Settings</h4>
+                        <div class="form-item" style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Public WebSocket Host (WSS)</label>
+                            <input type="text" name="mqtt_websocket_host" value="{{ settings.mqtt_websocket_host }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);" placeholder="e.g. mqtt.yourdomain.com">
+                        </div>
+                        <div class="grid g-2">
+                            <div class="form-item">
+                                <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">WS Port</label>
+                                <input type="number" name="mqtt_websocket_port" value="{{ settings.mqtt_websocket_port|default:443 }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                            </div>
+                            <div class="form-item" style="display:flex; align-items:center; gap:10px; margin-top:1.5rem;">
+                                <input type="checkbox" name="mqtt_use_ssl" {% if settings.mqtt_use_ssl %}checked{% endif %} id="mqtt_use_ssl" style="width: 18px; height: 18px;">
+                                <label for="mqtt_use_ssl" style="font-size: 12px; font-weight: 600;">Enable WSS (SSL)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety & Logic -->
+            <div class="card">
+                <div class="card-h">
+                    <h3>Safety Thresholds</h3>
+                    <span class="sub">Compliance & Alert Triggers</span>
+                </div>
+                <div class="card-b" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem;">
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Max Allowed Alcohol (mg/L)</label>
+                        <input type="number" step="0.01" name="allowed_alcohol_level" value="{{ settings.allowed_alcohol_level }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">Readings above this level will trigger a critical incident and alert supervisor.</p>
+                    </div>
+
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Speed Limit (km/h)</label>
+                        <input type="number" step="1" name="speed_limit" value="{{ settings.speed_limit|default:60 }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">The speed limit sent to devices for onboard enforcement.</p>
+                    </div>
+                    
+                    <div class="form-item">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Inactivity Timeout (min)</label>
+                        <input type="number" name="inactivity_timeout" value="15" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                    </div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--blue-soft); border-radius: 8px; border: 1px solid var(--blue);">
+                        <div style="display: flex; gap: 10px; align-items: flex-start;">
+                            <div style="color: var(--blue-ink); font-weight: 600;">ℹ️</div>
+                            <div style="font-size: 12px; color: var(--blue-ink);">
+                                Threshold changes are applied globally to all registered helmets on their next heartbeat signal.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: 1 / -1; margin-bottom: 4rem;">
+                <div class="card-b" style="display:flex; justify-content: flex-end; gap: 1rem; padding: 1rem;">
+                    <button type="reset" class="btn" style="padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--line);">Discard Changes</button>
+                    <button type="submit" class="btn primary" style="padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; background: var(--blue); color: #fff;">Commit Modifications</button>
+                </div>
+            </div>
+        </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

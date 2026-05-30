@@ -1,0 +1,41 @@
+﻿{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+    <div class="page-h">
+        <h1>Registration Portal</h1>
+        <p>Enroll a new rider and assign a safety unit</p>
+    </div>
+
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <div class="card-h">
+            <h3>Rider Details</h3>
+            <span class="sub">Profile and Hardware Assignment</span>
+        </div>
+        <div class="card-b" style="padding: 2rem;">
+            <form method="POST">
+                {% csrf_token %}
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Full Name</label>
+                        <input type="text" name="name" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Email Address</label>
+                        <input type="email" name="email" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Assign Helmet ID</label>
+                        <input type="text" name="helmet_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);" placeholder="e.g. HH-9982">
+                        <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">The system will automatically register this as a new hardware unit if it does not exist.</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <a href="{% url 'riders' %}" class="btn" style="flex: 1; text-align: center; padding: 0.8rem; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; font-weight: 600; color: var(--ink);">Cancel</a>
+                        <button type="submit" class="btn primary" style="flex: 2; background: var(--ink); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Register Rider</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
