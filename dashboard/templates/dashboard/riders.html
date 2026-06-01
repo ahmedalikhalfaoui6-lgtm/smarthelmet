@@ -82,7 +82,13 @@
                             </div>
                         </td>
                         <td>
-                            <a href="{% url 'rider_detail' rider.id %}" class="btn sm primary">Track</a>
+                            <div class="rider-actions">
+                                <a href="{% url 'rider_detail' rider.id %}" class="btn sm primary">Track</a>
+                                <form action="{% url 'delete_rider' rider.id %}" method="post" onsubmit="return confirm('Remove {{ rider.name|escapejs }} from registered riders?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn sm danger">Remove</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}

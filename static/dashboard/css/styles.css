@@ -377,6 +377,8 @@ a { color: inherit; text-decoration: none; }
 .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .btn.primary:hover { background: #000; }
 .btn.blue { background: var(--blue); color: white; border-color: var(--blue); }
+.btn.danger { background: var(--red-soft); color: var(--red-ink); border-color: transparent; }
+.btn.danger:hover { background: var(--red); color: white; }
 .btn.ghost { background: transparent; border-color: transparent; }
 .btn.ghost:hover { background: var(--section); }
 .btn.sm { padding: 4px 9px; font-size: 11.5px; border-radius: 6px; }
@@ -883,6 +885,15 @@ progress {
   padding: 32px 18px;
   text-align: center;
   color: var(--ink-3);
+}
+.rider-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rider-actions form {
+  margin: 0;
 }
 
 /* Fleet analytics heatmap */

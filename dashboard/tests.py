@@ -72,6 +72,33 @@ class DashboardSafetySummaryTests(TestCase):
         self.assertTrue(payload['gps_fix'])
 
 
+class RiderManagementTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='operator', password='pass')
+        self.client.login(username='operator', password='pass')
+        self.rider = Rider.objects.create(
+            name='Delete Me',
+            email='delete@example.com',
+            bike_id='BIKE-DEL',
+        )
+        self.helmet = Helmet.objects.create(helmet_id='HH-DEL', rider=self.rider)
+
+    def test_delete_rider_requires_post(self):
+        response = self.client.get(reverse('delete_rider', args=[self.rider.id]))
+
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Rider.objects.filter(id=self.rider.id).exists())
+
+    def test_delete_rider_removes_rider_and_unassigns_helmet(self):
+        response = self.client.post(reverse('delete_rider', args=[self.rider.id]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('riders'))
+        self.assertFalse(Rider.objects.filter(id=self.rider.id).exists())
+        self.helmet.refresh_from_db()
+        self.assertIsNone(self.helmet.rider)
+
+
 class FleetActivityHeatmapTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='operator', password='pass')

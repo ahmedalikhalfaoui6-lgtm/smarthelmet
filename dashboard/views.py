@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.http import JsonResponse
 from .models import Rider, Helmet, Route, GPSPoint, SystemSettings, Incident, MaintenanceLog
@@ -8,6 +8,7 @@ import json
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 def get_dashboard_safety_summary():
     total_helmets = Helmet.objects.count()
@@ -195,10 +196,17 @@ def riders_list(request):
 
 @login_required
 def rider_detail(request, rider_id):
-    from django.shortcuts import get_object_or_404
     rider = get_object_or_404(Rider, id=rider_id)
     routes = Route.objects.filter(rider=rider).order_by('-start_time')
     return render(request, 'dashboard/rider_detail.html', {'rider': rider, 'routes': routes})
+
+
+@login_required
+@require_POST
+def delete_rider(request, rider_id):
+    rider = get_object_or_404(Rider, id=rider_id)
+    rider.delete()
+    return redirect('riders')
 
 def live_data(request):
     rider_id = request.GET.get('rider_id')
