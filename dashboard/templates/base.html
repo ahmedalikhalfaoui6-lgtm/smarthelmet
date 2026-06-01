@@ -46,6 +46,7 @@
         <div class="sb-section">Core Fleet</div>
         <a class="sb-item {% if request.path == '/' %}active{% endif %}" href="/"><span class="nav-mark"></span><span>Safety Map</span></a>
         <a class="sb-item {% if '/riders/' in request.path %}active{% endif %}" href="{% url 'riders' %}"><span class="nav-mark"></span><span>Riders</span></a>
+        <a class="sb-item {% if '/risk-overview/' in request.path %}active{% endif %}" href="{% url 'risk_overview' %}"><span class="nav-mark"></span><span>Risk Overview</span></a>
         
         <div class="sb-section">Incidents</div>
         <a class="sb-item {% if '/incidents/' in request.path %}active{% endif %}" href="{% url 'incidents' %}"><span class="nav-mark"></span><span>Alert History</span><span class="badge">{{ global_critical_incidents }}</span></a>
@@ -82,6 +83,7 @@
           <div class="tb-title" style="white-space: nowrap;">
             {% if '/riders/' in request.path and rider %}Rider Detail
             {% elif '/riders/' in request.path %}Rider Management
+            {% elif '/risk-overview/' in request.path %}Risk Overview
             {% elif '/incidents/' in request.path %}Safety Incidents
             {% elif '/maintenance/' in request.path %}Maintenance Logs
             {% elif '/settings/' in request.path %}System Settings
@@ -90,6 +92,7 @@
           <div class="tb-crumb">
             {% if '/riders/' in request.path and rider %}Fleet / {{ rider.name }}
             {% elif '/riders/' in request.path %}Fleet / Active Riders
+            {% elif '/risk-overview/' in request.path %}Fleet / Risk Overview
             {% elif '/incidents/' in request.path %}Safety / Security Logs
             {% elif '/maintenance/' in request.path %}Fleet / Maintenance
             {% elif '/settings/' in request.path %}System / Configurations

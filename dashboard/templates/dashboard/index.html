@@ -11,64 +11,52 @@
     </div>
   </div>
 
-  <div class="grid g-4" style="gap: 1.5rem; margin-bottom: 2rem;">
+  <div class="grid g-2 dashboard-kpi-row">
     <div class="stat"><div class="top"><span class="lbl">Helmets online</span><span class="ic">HH</span></div><div class="num">{{ connected_helmets }}<small> / {{ total_helmets }}</small></div><div class="mini-line"></div></div>
     <div class="stat">
       <div class="top"><span class="lbl">Ride-Ready Helmets</span><span class="ic">RR</span></div>
       <div class="num" id="ride-ready-count" style="color:var(--{{ ride_ready_color }}-ink)">{{ ride_ready_helmets }}<small id="ride-ready-total">/ {{ connected_helmets }}</small></div>
       <div class="delta"><span class="meta">Helmet on + strap closed + alcohol safe</span></div>
-      <div class="mini-line {{ ride_ready_color }}"></div>
+      <div class="mini-line {{ ride_ready_color }}" id="ride-ready-line"></div>
     </div>
-    <div class="stat"><div class="top"><span class="lbl">Active alerts</span><span class="ic">AL</span></div><div class="num" style="color:var(--red-ink)">{{ critical_incidents }}</div><div class="mini-line red"></div></div>
+  </div>
+
+  <div class="grid g-1 dashboard-alert-row">
     <div class="stat">
-      <div class="top"><span class="lbl">Motor Permission</span><span class="ic">MP</span></div>
-      <div class="num" id="motor-permission" style="color:var(--{{ motor_color }}-ink)">{{ motor_permission }}</div>
-      <div class="delta"><span class="meta" id="motor-reason">{{ motor_reason }}</span></div>
-      <div class="mini-line {{ motor_color }}" id="motor-line"></div>
+      <div class="top"><span class="lbl">Active alerts</span><span class="ic">AL</span></div>
+      <div class="num" style="color:var(--red-ink)">{{ critical_incidents }}</div>
+      <div class="mini-line red"></div>
     </div>
   </div>
 
   <div class="grid g-1" style="margin-bottom: 2rem;">
     <div class="card">
-        <div class="card-h">
-            <h3>Safety Readiness & Fail-Safe</h3>
-            <span class="sub">Live ride gate conditions</span>
-        </div>
-        <div class="card-b">
-            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Helmet Worn</div>
-                    <div style="font-size: 24px; font-weight: 700; color: var(--blue-ink);" id="helmet-worn-count">{{ helmet_worn_count }} / {{ connected_helmets }}</div>
-                    <progress id="helmet-worn-progress" value="{{ helmet_worn_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
-                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">IR helmet detection</div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Strap Secured</div>
-                    <div style="font-size: 24px; font-weight: 700; color: var(--green-ink);" id="strap-secured-count">{{ strap_secured_count }} / {{ connected_helmets }}</div>
-                    <progress id="strap-secured-progress" value="{{ strap_secured_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
-                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Loose strap blocks motor</div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Alcohol Safe</div>
-                    <div style="font-size: 24px; font-weight: 700; color: var(--amber-ink);" id="alcohol-safe-count">{{ alcohol_safe_count }} / {{ connected_helmets }}</div>
-                    <progress id="alcohol-safe-progress" value="{{ alcohol_safe_count }}" max="{{ connected_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
-                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Limit: {{ alcohol_limit }} mg/L</div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 11px; color: var(--ink-3); text-transform: uppercase; margin-bottom: 0.5rem;">Link Fail-Safe</div>
-                    <div style="font-size: 24px; font-weight: 700; color: var(--red-ink);" id="link-failsafe-count">{{ disconnected_helmets }} offline</div>
-                    <progress id="link-failsafe-progress" value="{{ connected_helmets }}" max="{{ total_helmets|default:1 }}" style="width: 100%; margin-top: 0.75rem;"></progress>
-                    <div style="font-size: 12px; color: var(--ink-2); margin-top: 0.2rem;">Relay cuts after 2s link loss</div>
-                </div>
+      <div class="card-h">
+        <h3>Active Riders</h3>
+        <span class="sub">Live helmet telemetry</span>
+      </div>
+      <div class="card-b tight">
+        <div class="active-riders-list" id="active-riders-list">
+          {% for rider in active_riders %}
+          <div class="active-rider-row" data-rider-id="{{ rider.id }}" data-helmet-id="{{ rider.helmet.helmet_id }}">
+            <div class="active-rider-id">
+              <b class="mono">{{ rider.helmet.helmet_id }}</b>
+              <span>{{ rider.name }}</span>
             </div>
-            <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;" id="setup-checklist">
-              <span class="pill amber">SOS phone set</span>
-              <span class="pill amber">Receiver MAC set</span>
-              <span class="pill amber">Relay polarity checked</span>
-              <span class="pill amber">IR polarity checked</span>
-              <span class="pill amber">Shock/tilt calibrated</span>
+            <div class="active-rider-telemetry" data-role="telemetry">loading...</div>
+            <div class="active-rider-checks" aria-label="Safety checks">
+              <span class="rider-check"><span class="status-dot gray" data-role="strap-dot"></span>Strap</span>
+              <span class="rider-check"><span class="status-dot gray" data-role="helmet-dot"></span>Helmet</span>
+              <span class="rider-check"><span class="status-dot gray" data-role="gps-dot"></span>GPS</span>
             </div>
+            <span class="pill gray" data-role="connection"><span class="d"></span>loading...</span>
+            <a class="rider-arrow" href="{% url 'rider_detail' rider.id %}" aria-label="Open rider detail">&gt;</a>
+          </div>
+          {% empty %}
+          <div class="empty-state">No assigned riders</div>
+          {% endfor %}
         </div>
+      </div>
     </div>
   </div>
 
@@ -128,87 +116,91 @@
     var markers = {};
     var mapStatus = document.getElementById('map-status');
 
-    function setProgress(id, value, max) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        el.max = Math.max(max, 1);
-        el.value = value;
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function (char) {
+            return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'})[char];
+        });
     }
 
-    function setReadinessColor(color) {
-        var readyCount = document.getElementById('ride-ready-count');
-        var motorPermission = document.getElementById('motor-permission');
-        var motorLine = document.getElementById('motor-line');
-        if (readyCount) readyCount.style.color = `var(--${color}-ink)`;
-        if (motorLine) motorLine.className = `mini-line ${color}`;
-        if (motorPermission) motorPermission.style.color = `var(--${color}-ink)`;
+    function formatNumber(value, digits) {
+        var num = Number(value || 0);
+        return Number.isInteger(num) ? String(num) : num.toFixed(digits);
+    }
+
+    function setDot(dot, ok) {
+        if (!dot) return;
+        dot.className = `status-dot ${ok ? 'green' : 'red'}`;
     }
 
     function updateSafetySummary(data) {
-        var total = data.length;
         var connected = data.filter(h => h.is_connected);
         var ready = connected.filter(h => h.motor_allowed);
-        var worn = connected.filter(h => h.worn);
-        var strapped = connected.filter(h => h.strapped);
-        var alcoholSafe = connected.filter(h => h.alcohol_safe);
-        var disconnected = Math.max(total - connected.length, 0);
+        var color = 'red';
 
-        if (document.getElementById('ride-ready-count')) {
-            document.getElementById('ride-ready-count').childNodes[0].nodeValue = ready.length;
+        if (connected.length > 0 && ready.length === connected.length) {
+            color = 'green';
+        } else if (ready.length > 0) {
+            color = 'amber';
+        }
+
+        var readyCount = document.getElementById('ride-ready-count');
+        var readyLine = document.getElementById('ride-ready-line');
+        if (readyCount) {
+            readyCount.childNodes[0].nodeValue = ready.length;
+            readyCount.style.color = `var(--${color}-ink)`;
         }
         if (document.getElementById('ride-ready-total')) {
             document.getElementById('ride-ready-total').innerText = `/ ${connected.length}`;
         }
-        if (document.getElementById('helmet-worn-count')) {
-            document.getElementById('helmet-worn-count').innerText = `${worn.length} / ${connected.length}`;
+        if (readyLine) {
+            readyLine.className = `mini-line ${color}`;
         }
-        if (document.getElementById('strap-secured-count')) {
-            document.getElementById('strap-secured-count').innerText = `${strapped.length} / ${connected.length}`;
-        }
-        if (document.getElementById('alcohol-safe-count')) {
-            document.getElementById('alcohol-safe-count').innerText = `${alcoholSafe.length} / ${connected.length}`;
-        }
-        if (document.getElementById('link-failsafe-count')) {
-            document.getElementById('link-failsafe-count').innerText = `${disconnected} offline`;
-        }
+    }
 
-        setProgress('helmet-worn-progress', worn.length, connected.length);
-        setProgress('strap-secured-progress', strapped.length, connected.length);
-        setProgress('alcohol-safe-progress', alcoholSafe.length, connected.length);
-        setProgress('link-failsafe-progress', connected.length, total);
+    function updateActiveRiders(data) {
+        var byRiderId = {};
+        data.forEach(helmet => {
+            if (helmet.rider_id) byRiderId[String(helmet.rider_id)] = helmet;
+        });
 
-        var permission = 'Blocked';
-        var reason = 'No helmets online';
-        var color = 'red';
-        if (connected.length > 0 && ready.length === connected.length) {
-            permission = 'Enabled';
-            reason = 'All checks passed';
-            color = 'green';
-        } else if (ready.length > 0) {
-            permission = 'Mixed';
-            reason = `${ready.length}/${connected.length} helmets ready`;
-            color = 'amber';
-        } else if (connected.length > 0) {
-            var blocked = connected.find(h => h.motor_reason && h.motor_reason !== 'All checks passed');
-            reason = blocked ? blocked.motor_reason : 'Blocked: checks incomplete';
-        }
+        document.querySelectorAll('.active-rider-row').forEach(row => {
+            var helmet = byRiderId[row.dataset.riderId];
+            if (!helmet) return;
 
-        if (document.getElementById('motor-permission')) {
-            document.getElementById('motor-permission').innerText = permission;
-        }
-        if (document.getElementById('motor-reason')) {
-            document.getElementById('motor-reason').innerText = reason;
-        }
-        setReadinessColor(color);
+            var telemetry = row.querySelector('[data-role="telemetry"]');
+            var connection = row.querySelector('[data-role="connection"]');
+            var speed = formatNumber(helmet.speed, 1);
+            var alcohol = formatNumber(helmet.alc, 2);
+            var tilt = formatNumber(helmet.tilt, 1);
+            var battery = Math.max(0, Math.min(100, Number(helmet.bat || 0)));
+
+            if (telemetry) {
+                telemetry.innerHTML = `
+                    <span>${escapeHtml(speed)} km/h</span>
+                    <span>${escapeHtml(alcohol)} mg/L</span>
+                    <span>${escapeHtml(tilt)}°</span>
+                    <span>${escapeHtml(battery)}%</span>
+                `;
+            }
+            setDot(row.querySelector('[data-role="strap-dot"]'), Boolean(helmet.strapped));
+            setDot(row.querySelector('[data-role="helmet-dot"]'), Boolean(helmet.worn));
+            setDot(row.querySelector('[data-role="gps-dot"]'), Boolean(helmet.gps_fix));
+
+            if (connection) {
+                connection.className = `pill ${helmet.is_connected ? 'green' : 'gray'}`;
+                connection.innerHTML = `<span class="d"></span>${helmet.is_connected ? 'Online' : 'Offline'}`;
+            }
+        });
     }
 
     function updateLiveData() {
         if (mapStatus) mapStatus.style.display = 'inline-flex';
-        
+
         fetch('/live-data/')
             .then(response => response.json())
             .then(data => {
                 updateSafetySummary(data);
+                updateActiveRiders(data);
 
                 data.forEach(helmet => {
                     var lat = helmet.lat;
@@ -226,13 +218,13 @@
                     if (lat && lng) {
                         var popupText = `
                             <div style="min-width: 180px;">
-                                <h4 style="margin:0 0 5px; font-size:14px;">${rider}</h4>
-                                <div style="font-size:11px; color:#666; margin-bottom:8px;">ID: ${id}</div>
+                                <h4 style="margin:0 0 5px; font-size:14px;">${escapeHtml(rider)}</h4>
+                                <div style="font-size:11px; color:#666; margin-bottom:8px;">ID: ${escapeHtml(id)}</div>
                                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                    <span>Speed:</span><b>${speed} km/h</b>
+                                    <span>Speed:</span><b>${escapeHtml(speed)} km/h</b>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                    <span>Alcohol:</span><b style="color:${helmet.alcohol_safe ? 'green' : 'red'}">${alc} mg/L</b>
+                                    <span>Alcohol:</span><b style="color:${helmet.alcohol_safe ? 'green' : 'red'}">${escapeHtml(alc)} mg/L</b>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                                     <span>Helmet:</span><b>${helmetState}</b>
@@ -246,11 +238,11 @@
                                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                                     <span>GPS:</span><b>${gpsState}</b>
                                 </div>
-                                <div style="font-size:10px; color:#666; margin-bottom:8px;">${helmet.motor_reason}</div>
+                                <div style="font-size:10px; color:#666; margin-bottom:8px;">${escapeHtml(helmet.motor_reason)}</div>
                                 ${profileLink}
                             </div>
                         `;
-                        
+
                         if (markers[id]) {
                             markers[id].setLatLng([lat, lng]).setPopupContent(popupText);
                         } else {
@@ -265,7 +257,7 @@
                         }
                     }
                 });
-                
+
                 setTimeout(() => { if (mapStatus) mapStatus.style.display = 'none'; }, 1000);
             })
             .catch(err => {

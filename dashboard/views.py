@@ -1,3 +1,5 @@
+from datetime import datetime, time, timedelta
+
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import JsonResponse
@@ -5,6 +7,7 @@ from .models import Rider, Helmet, Route, GPSPoint, SystemSettings, Incident, Ma
 import json
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 def get_dashboard_safety_summary():
     total_helmets = Helmet.objects.count()
@@ -78,6 +81,7 @@ def get_dashboard_safety_summary():
         'refresh_rate': refresh_rate,
         'critical_incidents': critical_incidents,
         'recent_incidents': recent_incidents,
+        'active_riders': Rider.objects.select_related('helmet').filter(helmet__isnull=False).order_by('name'),
     }
     return context
 
@@ -85,6 +89,72 @@ def get_dashboard_safety_summary():
 @login_required
 def dashboard(request):
     return render(request, 'dashboard/index.html', get_dashboard_safety_summary())
+
+
+@login_required
+def risk_overview(request):
+    settings_obj = SystemSettings.objects.first()
+    refresh_rate = settings_obj.map_refresh_rate_seconds if settings_obj else 5
+    return render(request, 'dashboard/risk_overview.html', {'refresh_rate': refresh_rate})
+
+
+@login_required
+def fleet_activity_heatmap(request):
+    filter_map = {
+        'crash': 'CRASH',
+        'alcohol': 'ALC',
+        'disconnect': 'DISC',
+    }
+    selected_filter = request.GET.get('filter', 'all')
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    hours = [f'{hour:02d}h' for hour in range(24)]
+    buckets = [[0 for _ in range(24)] for _ in range(7)]
+
+    tz = timezone.get_current_timezone()
+    start_date = timezone.localdate() - timedelta(days=6)
+    start_at = timezone.make_aware(datetime.combine(start_date, time.min), tz)
+
+    incidents = Incident.objects.filter(timestamp__gte=start_at)
+    incident_type = filter_map.get(selected_filter)
+    if incident_type:
+        incidents = incidents.filter(type=incident_type)
+
+    for incident in incidents.only('timestamp'):
+        local_timestamp = timezone.localtime(incident.timestamp, tz)
+        buckets[local_timestamp.weekday()][local_timestamp.hour] += 1
+
+    max_count = max((count for row in buckets for count in row), default=0)
+    total_incidents = sum(count for row in buckets for count in row)
+
+    if total_incidents:
+        peak_day_index, peak_hour_index, _ = max(
+            ((day_index, hour_index, count) for day_index, row in enumerate(buckets) for hour_index, count in enumerate(row)),
+            key=lambda item: item[2],
+        )
+        quiet_hour_index, _ = min(
+            ((hour_index, sum(row[hour_index] for row in buckets)) for hour_index in range(24)),
+            key=lambda item: item[1],
+        )
+        peak_day = days[peak_day_index]
+        peak_hour = hours[peak_hour_index]
+        quietest_hour = hours[quiet_hour_index]
+    else:
+        peak_day = 'None'
+        peak_hour = 'None'
+        quietest_hour = 'None'
+
+    return JsonResponse({
+        'days': days,
+        'hours': hours,
+        'buckets': buckets,
+        'max_count': max_count,
+        'summary': {
+            'peak_hour': peak_hour,
+            'peak_day': peak_day,
+            'quietest_hour': quietest_hour,
+            'total_incidents': total_incidents,
+        },
+    })
 
 @login_required
 def incidents_list(request):

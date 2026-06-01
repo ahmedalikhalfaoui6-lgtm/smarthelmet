@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block content %}
+<section id="risk-overview" class="static-section">
+  <div class="page-h">
+    <div>
+      <h1>Risk Overview</h1>
+      <p>Incident activity patterns across the last 7 calendar days</p>
+    </div>
+  </div>
+
+  <div class="card risk-overview-card" id="risk-overview-card" data-risk-filter="all">
+    <div class="card-h">
+      <h3>Risk Overview</h3>
+      <span class="sub">Mon-Sun by hour</span>
+    </div>
+    <div class="card-b">
+      <div class="heatmap-toolbar" role="tablist" aria-label="Risk overview filter">
+        <button type="button" class="heatmap-chip active" data-filter="all">All incidents</button>
+        <button type="button" class="heatmap-chip" data-filter="crash">Crash</button>
+        <button type="button" class="heatmap-chip" data-filter="alcohol">Alcohol</button>
+        <button type="button" class="heatmap-chip" data-filter="disconnect">Disconnect</button>
+      </div>
+      <div class="heatmap-scroll">
+        <div class="heatmap-grid" id="fleet-heatmap" aria-live="polite"></div>
+      </div>
+      <div class="heatmap-legend">
+        <span>less</span>
+        <div class="heatmap-legend-bar"></div>
+        <span>more</span>
+      </div>
+      <div class="heatmap-summary">
+        <div><span>Peak hour</span><b id="heatmap-peak-hour">None</b></div>
+        <div><span>Peak day</span><b id="heatmap-peak-day">None</b></div>
+        <div><span>Quietest hour</span><b id="heatmap-quietest-hour">None</b></div>
+        <div><span>Total incidents</span><b id="heatmap-total">0</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  var currentHeatmapFilter = 'all';
+  var riskColorMap = {
+    all: 'var(--red)',
+    crash: 'var(--red)',
+    alcohol: 'var(--amber)',
+    disconnect: 'var(--blue)'
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (char) {
+      return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'})[char];
+    });
+  }
+
+  function setRiskColor() {
+    var card = document.getElementById('risk-overview-card');
+    if (!card) return;
+    card.dataset.riskFilter = currentHeatmapFilter;
+    card.style.setProperty('--risk-color', riskColorMap[currentHeatmapFilter] || riskColorMap.all);
+  }
+
+  function renderHeatmap(payload) {
+    var grid = document.getElementById('fleet-heatmap');
+    if (!grid) return;
+
+    setRiskColor();
+    var maxCount = payload.max_count || 0;
+    var riskColor = riskColorMap[currentHeatmapFilter] || riskColorMap.all;
+    var html = '<div class="heatmap-corner"></div>';
+
+    payload.hours.forEach(hour => {
+      html += `<div class="heatmap-hour">${escapeHtml(hour)}</div>`;
+    });
+
+    payload.days.forEach((day, dayIndex) => {
+      html += `<div class="heatmap-day">${escapeHtml(day)}</div>`;
+      payload.buckets[dayIndex].forEach(count => {
+        var intensity = maxCount ? Math.max(0.12, count / maxCount) : 0;
+        var color = intensity
+          ? `color-mix(in oklch, ${riskColor} ${Math.round(18 + intensity * 72)}%, var(--section) ${Math.round(82 - intensity * 72)}%)`
+          : 'var(--section)';
+        html += `<div class="heatmap-cell" title="${count} incidents" style="background:${color}">${count || ''}</div>`;
+      });
+    });
+    grid.innerHTML = html;
+
+    document.getElementById('heatmap-peak-hour').innerText = payload.summary.peak_hour;
+    document.getElementById('heatmap-peak-day').innerText = payload.summary.peak_day;
+    document.getElementById('heatmap-quietest-hour').innerText = payload.summary.quietest_hour;
+    document.getElementById('heatmap-total').innerText = payload.summary.total_incidents;
+  }
+
+  function loadHeatmap() {
+    fetch(`/fleet-activity-heatmap/?filter=${encodeURIComponent(currentHeatmapFilter)}`)
+      .then(response => response.json())
+      .then(renderHeatmap)
+      .catch(err => console.error('Risk overview update error:', err));
+  }
+
+  document.querySelectorAll('.heatmap-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      currentHeatmapFilter = this.dataset.filter;
+      document.querySelectorAll('.heatmap-chip').forEach(item => item.classList.toggle('active', item === this));
+      setRiskColor();
+      loadHeatmap();
+    });
+  });
+
+  setRiskColor();
+  loadHeatmap();
+  setInterval(loadHeatmap, {{ refresh_rate }} * 1000);
+</script>
+{% endblock %}
