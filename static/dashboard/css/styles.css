@@ -803,8 +803,10 @@ progress {
 
 /* Dashboard operations */
 .dashboard-kpi-row {
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+   display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 .dashboard-alert-row {
   margin-bottom: 2rem;
