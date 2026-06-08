@@ -85,20 +85,25 @@
                 </div>
                 <div class="card-b" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem;">
                     <div class="form-item">
-                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Max Allowed Alcohol (mg/L)</label>
-                        <input type="number" step="0.01" name="allowed_alcohol_level" value="{{ settings.allowed_alcohol_level }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">
+🔒 Max Allowed Alcohol (mg/L)
+</label>
+                        <input type="number" step="0.01" name="allowed_alcohol_level" value="{{ settings.allowed_alcohol_level }}"readonly style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
                         <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">Readings above this level will trigger a critical incident and alert supervisor.</p>
-                    </div>
-
+                    </div> 
                     <div class="form-item">
-                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Speed Limit (km/h)</label>
-                        <input type="number" step="1" name="speed_limit" value="{{ settings.speed_limit|default:60 }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">
+🔒 Speed Limit (km/h)
+</label>
+                        <input type="number" step="1" name="speed_limit" value="{{ settings.speed_limit|default:60 }}" readonly style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
                         <p style="font-size: 11px; color: var(--ink-4); margin-top: 0.5rem;">The speed limit sent to devices for onboard enforcement.</p>
                     </div>
                     
                     <div class="form-item">
-                        <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">Inactivity Timeout (min)</label>
-                        <input type="number" name="inactivity_timeout" value="15" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
+                       <label style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem;">
+🔒 Inactivity Timeout (min)
+</label>
+                        <input type="number" name="inactivity_timeout" value="15" readonly style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--section);">
                     </div>
 
                     <div style="margin-top: 1rem; padding: 1rem; background: var(--blue-soft); border-radius: 8px; border: 1px solid var(--blue);">
@@ -115,7 +120,12 @@
             <div class="card" style="grid-column: 1 / -1; margin-bottom: 4rem;">
                 <div class="card-b" style="display:flex; justify-content: flex-end; gap: 1rem; padding: 1rem;">
                     <button type="reset" class="btn" style="padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--line);">Discard Changes</button>
-                    <button type="submit" class="btn primary" style="padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; background: var(--blue); color: #fff;">Commit Modifications</button>
+                   <button type="button"
+        class="btn primary"
+        disabled
+        style="padding:0.8rem 2rem;border-radius:8px;font-weight:600;background:#999;color:#fff;cursor:not-allowed;">
+🔒 Parameters Locked
+</button>
                 </div>
             </div>
         </div>
