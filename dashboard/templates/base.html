@@ -137,7 +137,11 @@
             </a>
           </div>
           <span class="live-ticker"><span class="pulse"></span>Online - {{ connected_helmets }} devices</span>
-          <span class="pill blue"><span class="d"></span>MQTT</span>
+          <span class="pill {% if global_critical_incidents > 0 %}red{% else %}green{% endif %}">
+    <span class="d"></span>
+    Alerts {{ global_critical_incidents }}
+</span>
+</span>
           <span class="pill green"><span class="d"></span>GSM 4G</span>
         </div>
       </header>
@@ -235,3 +239,4 @@
   <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
+
