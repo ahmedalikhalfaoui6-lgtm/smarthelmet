@@ -11,7 +11,7 @@
     </div>
   </div>
 
-  <div class="grid g-2 dashboard-kpi-row">
+  <div class="grid g-3 dashboard-kpi-row">
     <div class="stat"><div class="top"><span class="lbl">Helmets online</span><span class="ic">HH</span></div><div class="num">{{ connected_helmets }}<small> / {{ total_helmets }}</small></div><div class="mini-line"></div></div>
     <div class="stat">
       <div class="top"><span class="lbl">Ride-Ready Helmets</span><span class="ic">RR</span></div>
@@ -19,15 +19,19 @@
       <div class="delta"><span class="meta">Helmet on + strap closed + alcohol safe</span></div>
       <div class="mini-line {{ ride_ready_color }}" id="ride-ready-line"></div>
     </div>
+    <div class="stat">
+    <div class="top">
+        <span class="lbl">Active Alerts</span>
+        <span class="ic">AL</span>
+    </div>
+    <div class="num" style="color:var(--red-ink)">
+        {{ critical_incidents }}
+    </div>
+    <div class="mini-line red"></div>
+</div>
   </div>
 
-  <div class="grid g-1 dashboard-alert-row">
-    <div class="stat">
-      <div class="top"><span class="lbl">Active alerts</span><span class="ic">AL</span></div>
-      <div class="num" style="color:var(--red-ink)">{{ critical_incidents }}</div>
-      <div class="mini-line red"></div>
-    </div>
-  </div>
+  
 
   <div class="grid g-1" style="margin-bottom: 2rem;">
     <div class="card">
@@ -60,7 +64,7 @@
     </div>
   </div>
 
-  <div class="grid g-2" style="gap: 2rem; align-items: start;">
+  <div class="grid g-1" style="gap: 2rem; align-items: start;"> 
     <div class="card" style="margin-bottom: 0;">
       <div class="card-h">
         <h3>Live fleet map</h3>
@@ -73,37 +77,7 @@
         <div id="map" style="height: 550px; width: 100%; border-radius: 0 0 8px 8px;"></div>
       </div>
     </div>
-    <div class="card" style="margin-bottom: 0;">
-      <div class="card-h">
-        <h3>Safety Events</h3>
-        <span class="sub">Crash / alcohol events</span>
-      </div>
-      <div class="card-b tight">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Rider</th>
-              <th>Type</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for inc in recent_incidents %}
-            <tr>
-              <td>{{ inc.rider.name }}</td>
-              <td><span class="pill {% if inc.type == 'CRASH' %}red{% else %}amber{% endif %}">{{ inc.get_type_display }}</span></td>
-              <td><a href="{% url 'incidents' %}?id={{ inc.id }}" class="btn sm">Trace</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3" style="text-align:center; padding: 2rem;">No recent safety events</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div style="padding: 1rem; text-align: right;">
-          <a href="{% url 'incidents' %}" class="btn btn-sm">View All Logs</a>
-        </div>
-      </div>
-    </div>
+
   </div>
 </section>
 
