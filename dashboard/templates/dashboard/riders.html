@@ -60,13 +60,13 @@
                             <span class="pill red">Unstrapped</span>
                             {% endif %}
                         </td>
-                        <td>
-                            {% if rider.helmet.is_connected %}
-                            <span class="pill blue">Active</span>
-                            {% else %}
-                            <span class="pill gray">Resting</span>
-                            {% endif %}
-                        </td>
+                       <td>
+    {% if rider.helmet.is_worn %}
+    <span class="pill blue">Active</span>
+    {% else %}
+    <span class="pill gray">Inactive</span>
+    {% endif %}
+</td>
                         <td>
                             <span class="pill {% if rider.helmet.alcohol_level > 0.05 %}red{% else %}green{% endif %}">
                                 {{ rider.helmet.alcohol_level|default:0 }} mg/L
